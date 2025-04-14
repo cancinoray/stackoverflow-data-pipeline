@@ -1,0 +1,11 @@
+# Global ignores
+*.pyc
+__pycache__/
+.env
+*.log
+.vscode/
+.DS_Store
+
+#service account key
+.my-credentials.json
+*.json

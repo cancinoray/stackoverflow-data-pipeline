@@ -1,0 +1,17 @@
+version: "3.1"
+services:
+    scheduler:
+        volumes:
+        - ./my-credentials.json:/usr/local/airflow/gcloud/application_default_credentials.json:rw
+        - survey_data:/usr/local/airflow/survey_outputs:rw
+    webserver:
+        volumes:
+        - ./my-credentials.json:/usr/local/airflow/gcloud/application_default_credentials.json:rw
+        - survey_data:/usr/local/airflow/survey_outputs:rw
+    triggerer:
+        volumes:
+        - ./my-credentials.json:/usr/local/airflow/gcloud/application_default_credentials.json:rw
+        - survey_data:/usr/local/airflow/survey_outputs:rw
+
+volumes:
+    survey_data:
