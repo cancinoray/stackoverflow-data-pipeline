@@ -4,21 +4,7 @@ import re
 import zipfile
 import tempfile
 import io
-import csv
-
-
-def normalize_headers_with_dedup(headers):
-    seen = {}
-    normalized = []
-    for h in headers:
-        base = re.sub(r'\W+', '_', h.strip().lower())
-        if base in seen:
-            seen[base] += 1
-            normalized.append(f"{base}_{seen[base]}")
-        else:
-            seen[base] = 1
-            normalized.append(base)
-    return normalized
+import shutil
 
 
 def extract_upload_csvs_to_gcs_and_bigquery():
@@ -26,7 +12,6 @@ def extract_upload_csvs_to_gcs_and_bigquery():
         "GCS_BUCKET", "gsbucket-stackoverflow-survey-456106")
 
     storage_client = storage.Client()
-    bigquery_client = bigquery.Client()
     blobs = storage_client.list_blobs(bucket_name)
 
     for blob in blobs:
@@ -59,47 +44,18 @@ def extract_upload_csvs_to_gcs_and_bigquery():
                     print(f"No CSV found in {zip_filename}")
                     continue
 
+                # Pick the largest CSV
                 largest_csv = max(csv_files, key=os.path.getsize)
                 cleaned_csv_path = os.path.join(
                     temp_dir, f"{year}_cleaned.csv")
 
-                # Clean and normalize
-                with open(largest_csv, 'r', encoding='utf-8', errors='ignore') as infile, \
-                        open(cleaned_csv_path, 'w', newline='', encoding='utf-8') as outfile:
-
-                    reader = csv.reader(infile)
-                    writer = csv.writer(outfile)
-
-                    headers = next(reader)
-                    normalized_headers = [
-                        'id'] + [normalize_headers_with_dedup for h in headers] + ['year']
-                    writer.writerow(normalized_headers)
-
-                    for idx, row in enumerate(reader, start=1):
-                        row_data = [idx] + row + [year]
-                        writer.writerow(row_data)
+                # Copy the largest CSV to the cleaned path
+                shutil.copy(largest_csv, cleaned_csv_path)
 
                 # Upload cleaned file to GCS
                 destination_blob = f"cleaned_csv/{year}-survey.csv"
                 upload_blob = storage_client.bucket(
                     bucket_name).blob(destination_blob)
                 upload_blob.upload_from_filename(cleaned_csv_path)
-                print(
-                    f"Uploaded to GCS: gs://{bucket_name}/{destination_blob}")
 
-                # Upload to BigQuery
-                table_id = f"{bigquery_client.project}.stackoverflow_survey_dataset.survey_{year}"
-                job_config = bigquery.LoadJobConfig(
-                    autodetect=True,
-                    source_format=bigquery.SourceFormat.CSV,
-                    skip_leading_rows=1,
-                )
-
-                with open(cleaned_csv_path, "rb") as source_file:
-                    load_job = bigquery_client.load_table_from_file(
-                        source_file,
-                        table_id,
-                        job_config=job_config,
-                    )
-                    load_job.result()
-                    print(f"Uploaded to BigQuery: {table_id}")
+                print(f"Uploaded to GCS: gs://{bucket_name}/{destination_blob}")
