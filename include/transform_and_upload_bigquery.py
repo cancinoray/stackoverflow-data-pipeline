@@ -5,67 +5,37 @@ from google.cloud import storage
 import os
 
 from transforms.transform_2011 import transform_2011
-
-
-# ========== Year-Specific Transformation Functions ==========
-# def transform_2012(df):
-#     # TODO: Add transformation logic for 2012
-#     return df
-
-
-# def transform_2013(df):
-#     return df
-
-
-# def transform_2014(df):
-#     return df
-
-
-# def transform_2015(df):
-#     return df
-
-
-# def transform_2016(df):
-#     return df
-
-
-# def transform_2017(df):
-#     return df
-
-
-# def transform_2018(df):
-#     return df
-
-
-# def transform_2019(df):
-#     return df
-
-
-# def transform_2020(df):
-#     return df
-
-
-# def transform_2021(df):
-#     return df
-
-
-# def transform_2022(df):
-#     return df
-
-
-# def transform_2023(df):
-#     return df
-
-
-# def transform_2024(df):
-#     return df
-
-# ========== Dispatcher ==========
+from transforms.transform_2012 import transform_2012
+from transforms.transform_2013 import transform_2013
+from transforms.transform_2014 import transform_2014
+from transforms.transform_2015 import transform_2015
+from transforms.transform_2016 import transform_2016
+from transforms.transform_2017 import transform_2017
+from transforms.transform_2018 import transform_2018
+from transforms.transform_2019 import transform_2019
+from transforms.transform_2020 import transform_2020
+from transforms.transform_2021 import transform_2021
+from transforms.transform_2022 import transform_2022
+from transforms.transform_2023 import transform_2023
+from transforms.transform_2024 import transform_2024
 
 
 def apply_transformation(df, year):
     transform_functions = {
         2011: transform_2011,
+        2012: transform_2012,
+        2013: transform_2013,
+        2014: transform_2014,
+        2015: transform_2015,
+        2016: transform_2016,
+        2017: transform_2017,
+        2018: transform_2018,
+        2019: transform_2019,
+        2020: transform_2020,
+        2021: transform_2021,
+        2022: transform_2022,
+        2023: transform_2023,
+        2024: transform_2024,
     }
 
     transform_func = transform_functions.get(year)
