@@ -102,11 +102,10 @@ terraform init
 terraform apply
 ```
 
-### 4. Start Airflow with Docker Compose
+### 4. Start Airflow with Docker Compose (Using Astronomer)
 
 ```bash
-docker-compose up airflow-init
-docker-compose up
+astro dev start
 ```
 
 ### 5. Access Airflow
