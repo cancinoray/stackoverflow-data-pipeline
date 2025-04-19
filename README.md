@@ -81,7 +81,7 @@ This project demonstrates an end-to-end data pipeline for processing and analyzi
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/stackoverflow-pipeline.git
+git https://github.com/cancinoray/stackoverflow-data-pipeline
 cd stackoverflow-pipeline
 ```
 
