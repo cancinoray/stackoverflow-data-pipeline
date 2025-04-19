@@ -148,7 +148,7 @@ def transform_2024(df):
     )
 
     # Drop the original column
-    df_2024 = df_2024 .drop("annual_compensation")
+    df_2024 = df_2024.drop("annual_compensation")
 
     df_2024.groupBy("annual_compensation_usd").count().show(truncate=False)
 

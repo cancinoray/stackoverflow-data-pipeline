@@ -88,6 +88,12 @@ def transform_2022(df):
 
     df_2022.show()
 
+    # schema validation and editing
+    df_2022 = df_2022.withColumn("year", col("year").cast(types.IntegerType())) \
+        .withColumn("job_satisfaction", col("job_satisfaction").cast("string")) \
+        .withColumn("tech_own", col("tech_own").cast("string")) \
+
+
     df_2022.groupBy("experience_years").count().orderBy(
         "count", ascending=False).show(truncate=False)
 
@@ -158,7 +164,7 @@ def transform_2022(df):
     )
 
     # Drop the original column
-    df_2022 = df_2022 .drop("annual_compensation")
+    df_2022 = df_2022.drop("annual_compensation")
 
     df_2022.groupBy("annual_compensation_usd").count().show(truncate=False)
 

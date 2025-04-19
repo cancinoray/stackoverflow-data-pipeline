@@ -46,12 +46,12 @@ def apply_transformation(df, year):
 
 
 # ========== Main Orchestration Function ==========
-def transform__and_upload_to_bigquery(start_year=2011, end_year=2024):
+def transform_and_upload_to_bigquery(start_year=2011, end_year=2024):
     bucket_name = os.getenv(
         "GCS_BUCKET", "gsbucket-stackoverflow-survey-456106")
     # replace if not using env var
     bq_project = os.getenv("GCP_PROJECT", "stackoverflow-survey-456106")
-    bq_dataset = "stackoverflow_survey_dataset"
+    bq_dataset = os.getenv("GCP_BGQUERY", "stackoverflow_survey_dataset")
 
     # Initialize Spark
     spark = SparkSession.builder \
@@ -77,12 +77,7 @@ def transform__and_upload_to_bigquery(start_year=2011, end_year=2024):
             blob.download_to_filename(local_path)
             print(f"Downloaded {source_blob_name} to {local_path}")
 
-            # df = spark.read.option("header", "true").option(
-            #     "inferSchema", "true").csv(local_path)
-
             df = spark.read.csv(local_path, header=True, inferSchema=True)
-            print(f"This is the dataframe schema: {df.schema}")
-            print(f"This is the dataframe: {df.show()}")
 
             # Apply year-specific transformation
             cleaned_df = apply_transformation(df, year)
