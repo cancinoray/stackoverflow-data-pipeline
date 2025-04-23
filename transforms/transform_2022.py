@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id
+from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id, split, lower
 from pyspark.sql import types
 
 
@@ -7,9 +7,6 @@ def transform_2022(df):
     df_2022_raw = df.select(
         "Country",
         "EdLevel",
-        "LearnCode",
-        "LearnCodeOnline",
-        "LearnCodeCoursesCert",
         "DevType",
         "YearsCode",
         "ConvertedCompYearly",
@@ -19,29 +16,6 @@ def transform_2022(df):
         "Age",
         "Gender",
     )
-
-    df_2022_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "EdLevel",
-        "LearnCode",
-        "LearnCodeOnline",
-        "LearnCodeCoursesCert",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (
-        col(c) != ""), col(c)) for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
-    df_2022_raw = df_2022_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2022_raw = df_2022_raw.drop(*columns)
-
-    df_2022_raw.show()
 
     df_2022_raw = df_2022_raw.select(
         col("Country").alias("country"),
@@ -53,17 +27,13 @@ def transform_2022(df):
         col("LanguageHaveWorkedWith").alias("prog_language_proficient_in"),
         col("LanguageWantToWorkWith").alias("prog_language_desired"),
         col("OpSysProfessional use").alias("os_used"),
-        col("education").alias("education"),
+        col("EdLevel").alias("education"),
     )
-
-    df_2022_raw.show()
 
     # adding year column
     df_2022_raw = df_2022_raw.withColumn("year", lit("2022"))
-
     # adding new columns
     new_columns = ["job_satisfaction", "tech_own"]
-
     for col_name in new_columns:
         df_2022_raw = df_2022_raw.withColumn(col_name, lit(None))
 
@@ -86,16 +56,10 @@ def transform_2022(df):
 
     df_2022 = df_2022_raw.select(*reordered_columns)
 
-    df_2022.show()
-
     # schema validation and editing
     df_2022 = df_2022.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("job_satisfaction", col("job_satisfaction").cast("string")) \
-        .withColumn("tech_own", col("tech_own").cast("string")) \
-
-
-    df_2022.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+        .withColumn("tech_own", col("tech_own").cast("string"))
 
     df_2022 = df_2022.withColumn(
         "experience_years",
@@ -105,12 +69,6 @@ def transform_2022(df):
         .when(col("experience_years").cast("int") > 10, "11+")
         .otherwise(None)
     )
-
-    df_2022.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2022.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     # cleaning age column
     df_2022 = df_2022.withColumn(
@@ -125,18 +83,12 @@ def transform_2022(df):
         .otherwise(None)
     )
 
-    df_2022.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
     df_2022 = df_2022.withColumn(
         "sex",
         when(col("sex") == "Man", "Male")
         .when(col("sex") == "Woman", "Female")
         .otherwise(None)
     )
-
-    df_2022.groupBy("sex").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2022 = df_2022.withColumn(
         "annual_compensation_usd",
@@ -162,11 +114,21 @@ def transform_2022(df):
         .when(col("annual_compensation") > 200000, ">200,000")
         .otherwise(None)
     )
-
     # Drop the original column
-    df_2022 = df_2022.drop("annual_compensation")
-
+    df_2022 = df_2022 .drop("annual_compensation")
     df_2022.groupBy("annual_compensation_usd").count().show(truncate=False)
 
-    df_2022.show(5, truncate=False)
+    df_2022 = df_2022.withColumn(
+        "os_used",
+        when(col("os_used").isNull(), None)
+        .when(col("os_used").like("Windows%"), "Windows")
+        .when(col("os_used").like("Linux%"), "Linux")
+        .when(col("os_used").like("macOS%"), "Mac OS")
+        .otherwise(None)
+    )
+
+    df_2022 = df_2022.withColumn(
+        "occupation", split(col("occupation"), ";")[0])
+
+    df_2022.show()
     return df_2022

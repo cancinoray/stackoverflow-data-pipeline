@@ -7,8 +7,6 @@ def transform_2024(df):
     df_2024_raw = df.select(
         "Country",
         "EdLevel",
-        "LearnCode",
-        "LearnCodeOnline",
         "DevType",
         "YearsCode",
         "ConvertedCompYearly",
@@ -18,28 +16,6 @@ def transform_2024(df):
         "Age",
         "JobSat"
     )
-
-    df_2024_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "EdLevel",
-        "LearnCode",
-        "LearnCodeOnline",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
-    df_2024_raw = df_2024_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2024_raw = df_2024_raw.drop(*columns)
-
-    df_2024_raw.show()
 
     df_2024_raw = df_2024_raw.select(
         col("Country").alias("country"),
@@ -51,17 +27,13 @@ def transform_2024(df):
         col("LanguageWantToWorkWith").alias("prog_language_desired"),
         col("OpSysProfessional use").alias("os_used"),
         col("JobSat").alias("job_satisfaction"),
-        col("education").alias("education"),
+        col("EdLevel").alias("education")
     )
-
-    df_2024_raw.show()
 
     # adding year column
     df_2024_raw = df_2024_raw.withColumn("year", lit("2024"))
-
     # adding new columns
     new_columns = ["tech_own", 'sex']
-
     for col_name in new_columns:
         df_2024_raw = df_2024_raw.withColumn(col_name, lit(None))
 
@@ -81,18 +53,12 @@ def transform_2024(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2024 = df_2024_raw.select(*reordered_columns)
-
-    df_2024.show()
 
     # schema validation and editing
     df_2024 = df_2024.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("tech_own", col("tech_own").cast("string")) \
-        .withColumn("job_satisfaction", col("job_satisfaction").cast("string")) \
         .withColumn("sex", col("sex").cast("string"))
-
-    df_2024.printSchema()
 
     df_2024 = df_2024.withColumn(
         "experience_years",
@@ -102,9 +68,6 @@ def transform_2024(df):
         .when(col("experience_years").cast("int") > 10, "11+")
         .otherwise(None)
     )
-
-    df_2024.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     # cleaning age column
     df_2024 = df_2024.withColumn(
@@ -118,9 +81,6 @@ def transform_2024(df):
         .when(col("age") == "65 years or older", ">65")
         .otherwise(None)
     )
-
-    df_2024.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2024 = df_2024.withColumn(
         "annual_compensation_usd",
@@ -146,11 +106,22 @@ def transform_2024(df):
         .when(col("annual_compensation") > 200000, ">200,000")
         .otherwise(None)
     )
-
     # Drop the original column
-    df_2024 = df_2024.drop("annual_compensation")
-
+    df_2024 = df_2024 .drop("annual_compensation")
     df_2024.groupBy("annual_compensation_usd").count().show(truncate=False)
 
-    df_2024.show(5, truncate=False)
+    df_2024 = df_2024.withColumn(
+        "os_used",
+        when(col("os_used").isNull(), None)
+        .when(col("os_used").like("Windows%"), "Windows")
+        .when(col("os_used").like("Linux%"), "Linux")
+        .when(col("os_used").like("Ubuntu%"), "Linux")
+        .when(col("os_used").like("Arch%"), "Linux")
+        .when(col("os_used").like("macOS%"), "Mac OS")
+        .when(col("os_used").like("MacOS%"), "Mac OS")
+        .when(col("os_used").like("iOs%"), "Mac OS")
+        .otherwise(None)
+    )
+
+    df_2024.show()
     return df_2024

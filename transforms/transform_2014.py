@@ -71,13 +71,11 @@ def transform_2014(df):
     ]
 
     # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
+    cleaned_cols = [when((col(c).isNotNull()) & (
+        col(c) != ""), col(c)) for c in columns]
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2014_raw = df_2014_raw.withColumn(
         "prog_language_proficient_in", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2014_raw = df_2014_raw.drop(*columns)
 
@@ -99,15 +97,12 @@ def transform_2014(df):
         "_c80",
         "_c81",
     ]
-
     # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
+    cleaned_cols = [when((col(c).isNotNull()) & (
+        col(c) != ""), col(c)) for c in columns]
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2014_raw = df_2014_raw.withColumn(
         "tech_own", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2014_raw = df_2014_raw.drop(*columns)
 
@@ -128,18 +123,16 @@ def transform_2014(df):
         "_c65",
         "_c66",
     ]
-
     # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
+    cleaned_cols = [when((col(c).isNotNull()) & (
+        col(c) != ""), col(c)) for c in columns]
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2014_raw = df_2014_raw.withColumn(
         "prog_language_desired", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2014_raw = df_2014_raw.drop(*columns)
 
+    # Selecting the relevant columns
     df_2014_raw = df_2014_raw.select(
         col("What Country do you live in?").alias("country"),
         col("How old are you?").alias("age"),
@@ -160,19 +153,15 @@ def transform_2014(df):
     # Add index
     df_2014_raw = df_2014_raw.withColumn(
         'index', monotonically_increasing_id())
-
     # remove rows by filtering
     df_2014_raw = df_2014_raw.filter(~df_2014_raw.index.isin(0))
-
     # drop the index column
     df_2014_raw = df_2014_raw.drop("index")
 
     # adding year column
     df_2014_raw = df_2014_raw.withColumn("year", lit("2014"))
-
     # adding new columns
     new_columns = ["job_satisfaction", "education"]
-
     for col_name in new_columns:
         df_2014_raw = df_2014_raw.withColumn(col_name, lit(None))
 
@@ -192,23 +181,12 @@ def transform_2014(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2014 = df_2014_raw.select(*reordered_columns)
-
-    df_2014.show()
-
-    df_2014.printSchema()
 
     # schema validation and editing
     df_2014 = df_2014.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("education", col("education").cast("string")) \
-        .withColumn("job_satisfaction", col("job_satisfaction").cast("string")) \
-        .withColumn("prog_language_desired", col("prog_language_desired").cast("string"))
-
-    df_2014.printSchema()
-
-    df_2014.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+        .withColumn("job_satisfaction", col("job_satisfaction").cast("string"))
 
     # cleaning experience_years column
     df_2014 = df_2014.withColumn(
@@ -220,13 +198,6 @@ def transform_2014(df):
         .otherwise(None)
     )
 
-    df_2014.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2014.groupBy("annual_compensation").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    # cleaning the annual_compensation column
     # Clean and create the new column
     df_2014 = df_2014.withColumn(
         "annual_compensation_usd",
@@ -234,13 +205,8 @@ def transform_2014(df):
         .when(col("annual_compensation") == "Rather not say", None)
         .otherwise(regexp_replace(col("annual_compensation"), r"\$", ""))
     )
-
     # Drop the original column
     df_2014 = df_2014.drop("annual_compensation")
-
-    # Check result
-    df_2014.groupBy("annual_compensation_usd").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2014.show()
     return df_2014

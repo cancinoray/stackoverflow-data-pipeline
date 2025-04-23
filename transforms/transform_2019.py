@@ -7,8 +7,6 @@ def transform_2019(df):
     df_2019_raw = df.select(
         "Country",
         "EdLevel",
-        "UndergradMajor",
-        "EduOther",
         "DevType",
         "YearsCode",
         "JobSat",
@@ -19,28 +17,6 @@ def transform_2019(df):
         "Age",
         "Gender",
     )
-
-    df_2019_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "EdLevel",
-        "UndergradMajor",
-        "EduOther",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
-    df_2019_raw = df_2019_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2019_raw = df_2019_raw.drop(*columns)
-
-    df_2019_raw.show()
 
     df_2019_raw = df_2019_raw.select(
         col("Country").alias("country"),
@@ -53,17 +29,13 @@ def transform_2019(df):
         col("LanguageWorkedWith").alias("prog_language_desired"),
         col("JobSat").alias("job_satisfaction"),
         col("OpSys").alias("os_used"),
-        col("education").alias("education"),
+        col("EdLevel").alias("education"),
     )
-
-    df_2019_raw.show()
 
     # adding year column
     df_2019_raw = df_2019_raw.withColumn("year", lit("2019"))
-
     # adding new columns
     new_columns = ["tech_own"]
-
     for col_name in new_columns:
         df_2019_raw = df_2019_raw.withColumn(col_name, lit(None))
 
@@ -83,12 +55,7 @@ def transform_2019(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2019 = df_2019_raw.select(*reordered_columns)
-
-    df_2019.show()
-
-    df_2019.printSchema()
 
     # schema validation and editing
     df_2019 = df_2019.withColumn("year", col("year").cast(types.IntegerType())) \
@@ -108,12 +75,6 @@ def transform_2019(df):
         .otherwise(None)
     )
 
-    df_2019.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2019.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
     df_2019 = df_2019.withColumn(
         "age",
         when(col("age").isNull(), "null")
@@ -127,20 +88,12 @@ def transform_2019(df):
         .otherwise(">60")
     )
 
-    df_2019.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2019.show()
-
     df_2019 = df_2019.withColumn(
         "sex",
         when(col("sex") == "Man", "Male")
         .when(col("sex") == "Woman", "Female")
         .otherwise(None)
     )
-
-    df_2019.groupBy("sex").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2019 = df_2019.withColumn(
         "annual_compensation_usd",
@@ -166,11 +119,17 @@ def transform_2019(df):
         .when(col("annual_compensation") > 200000, ">200,000")
         .otherwise(None)
     )
-
     # Drop the original column
-    df_2019 = df_2019.drop("annual_compensation")
+    df_2019 = df_2019 .drop("annual_compensation")
 
-    df_2019.groupBy("annual_compensation_usd").count().show(truncate=False)
+    df_2019 = df_2019.withColumn(
+        "os_used",
+        when(col("os_used") == "Windows", "Windows")
+        .when(col("os_used") == "Linux-based", "Linux")
+        .when(col("os_used") == "MacOS", "Mac OS")
+        .when(col("os_used") == "NA", None)
+        .otherwise(None)
+    )
 
-    df_2019.show(5, truncate=False)
+    df_2019.show()
     return df_2019

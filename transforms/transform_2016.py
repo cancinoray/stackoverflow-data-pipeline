@@ -34,10 +34,8 @@ def transform_2016(df):
 
     # adding year column
     df_2016_raw = df_2016_raw.withColumn("year", lit("2016"))
-
     # adding new columns
     new_columns = ["tech_own"]
-
     for col_name in new_columns:
         df_2016_raw = df_2016_raw.withColumn(col_name, lit(None))
 
@@ -57,17 +55,12 @@ def transform_2016(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2016 = df_2016_raw.select(*reordered_columns)
 
     # schema validation and editing
     df_2016 = df_2016.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("tech_own", col("tech_own").cast("string")) \
 
-    df_2016.printSchema()
-
-    df_2016.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2016 = df_2016.withColumn(
         "experience_years",
@@ -79,13 +72,6 @@ def transform_2016(df):
         .otherwise(None)
     )
 
-    df_2016.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2016.groupBy("annual_compensation").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    # cleaning the annual_compensation column
     # Clean and create the new column
     df_2016 = df_2016.withColumn(
         "annual_compensation_usd",
@@ -95,13 +81,8 @@ def transform_2016(df):
         .when(col("annual_compensation") == "More than $200,000", ">200,000")
         .otherwise(regexp_replace(col("annual_compensation"), r"\$", ""))
     )
-
     # Drop the original column
     df_2016 = df_2016.drop("annual_compensation")
 
-    # Check result
-    df_2016.groupBy("annual_compensation_usd").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2016.show(5, truncate=False)
+    df_2016.show()
     return df_2016

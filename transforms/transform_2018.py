@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id
+from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id, split, lower
 from pyspark.sql import types
 
 
@@ -7,9 +7,6 @@ def transform_2018(df):
     df_2018_raw = df.select(
         "Country",
         "FormalEducation",
-        "UndergradMajor",
-        "EducationTypes",
-        "SelfTaughtTypes",
         "DevType",
         "YearsCoding",
         "JobSatisfaction",
@@ -21,29 +18,8 @@ def transform_2018(df):
         "Age",
     )
 
-    df_2018_raw.show()
-
-    # This is the format
-    # List all the relevant columns
-    columns = [
-        "FormalEducation",
-        "UndergradMajor",
-        "EducationTypes",
-        "SelfTaughtTypes",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (
-        col(c) != ""), col(c)) for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
     df_2018_raw = df_2018_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2018_raw = df_2018_raw.drop(*columns)
-
-    df_2018_raw.show()
+        "DevType", split(col("DevType"), ";")[0])
 
     df_2018_raw = df_2018_raw.select(
         col("Country").alias("country"),
@@ -56,17 +32,13 @@ def transform_2018(df):
         col("LanguageDesireNextYear").alias("prog_language_desired"),
         col("JobSatisfaction").alias("job_satisfaction"),
         col("OperatingSystem").alias("os_used"),
-        col("education").alias("education"),
+        col("FormalEducation").alias("education"),
     )
-
-    df_2018_raw.show()
 
     # adding year column
     df_2018_raw = df_2018_raw.withColumn("year", lit("2018"))
-
     # adding new columns
     new_columns = ["tech_own"]
-
     for col_name in new_columns:
         df_2018_raw = df_2018_raw.withColumn(col_name, lit(None))
 
@@ -89,18 +61,10 @@ def transform_2018(df):
 
     df_2018 = df_2018_raw.select(*reordered_columns)
 
-    df_2018.show()
-
-    df_2018.printSchema()
-
     # schema validation and editing
     df_2018 = df_2018.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("tech_own", col("tech_own").cast("string")) \
 
-    df_2018.printSchema()
-
-    df_2018.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2018 = df_2018.withColumn(
         "experience_years",
@@ -113,12 +77,6 @@ def transform_2018(df):
         ), "11+")
         .otherwise(None)
     )
-
-    df_2018.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2018.groupBy("annual_compensation").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2018 = df_2018.withColumn(
         "annual_compensation_usd",
@@ -144,15 +102,9 @@ def transform_2018(df):
         .when(col("annual_compensation") > 200000, ">200,000")
         .otherwise(None)
     )
-
     # Drop the original column
     df_2018 = df_2018 .drop("annual_compensation")
-
     df_2018.groupBy("annual_compensation_usd").count().show(truncate=False)
-
-    df_2018.show()
-
-    df_2018.groupBy("age").count().show(truncate=False)
 
     df_2018 = df_2018.withColumn(
         "age",
@@ -166,8 +118,30 @@ def transform_2018(df):
         .otherwise(None)
     )
 
-    df_2018.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+    df_2018 = df_2018.withColumn(
+        "os_used",
+        when(col("os_used") == "Windows", "Windows")
+        .when(col("os_used") == "Linux-based", "Linux")
+        .when(col("os_used") == "MacOS", "Mac OS")
+        .when(col("os_used") == "NA", None)
+        .otherwise(None)
+    )
 
-    df_2018.show(5, truncate=False)
+    df_2018 = df_2018.withColumn(
+        "sex",
+        when(col("sex").isNull(), "Unknown")
+        .when(lower(col("sex")).isin("prefer not to disclose", "i prefer not to answer", "i don't know/not sure"), "Unknown")
+        .when(lower(col("sex")).rlike("degree|high schoocollege|primary|no education"), "Unknown")
+        .when(lower(col("sex")) == "male", "Male")
+        .when(lower(col("sex")) == "female", "Female")
+        .when(lower(col("sex")).contains("non-binary"), "Non-binary")
+        .when(lower(col("sex")).contains("genderqueer"), "Non-binary")
+        .when(lower(col("sex")).contains("gender non-conforming"), "Non-binary")
+        .when(lower(col("sex")).contains("transgender"), "Transgender")
+        .when(lower(col("sex")).contains("other"), "Other")
+        .when(col("sex").contains(";"), "Multiple")
+        .otherwise("Other")
+    )
+
+    df_2018.show()
     return df_2018

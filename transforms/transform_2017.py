@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id
+from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id, lower, split
 from pyspark.sql import types
 
 
@@ -8,11 +8,8 @@ def transform_2017(df):
         "Country",
         "YearsProgram",
         "DeveloperType",
-        "WebDeveloperType",
-        "MobileDeveloperType",
         "JobSatisfaction",
         "FormalEducation",
-        "SelfTaughtTypes",
         "WantWorkLanguage",
         "HaveWorkedFramework",
         "Overpaid",
@@ -20,52 +17,10 @@ def transform_2017(df):
         "ExpectedSalary",
         "HighestEducationParents",
         "StackOverflowFoundAnswer"
-
     )
 
-    df_2017_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "DeveloperType",
-        "WebDeveloperType",
-        "MobileDeveloperType"
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
     df_2017_raw = df_2017_raw.withColumn(
-        "occupation", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2017_raw = df_2017_raw.drop(*columns)
-
-    df_2017_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "FormalEducation",
-        "SelfTaughtTypes",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
-    df_2017_raw = df_2017_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2017_raw = df_2017_raw.drop(*columns)
-
-    df_2017_raw.show()
-
-    df_2017_raw.groupBy("Overpaid").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+        "DeveloperType", split(col("DeveloperType"), ";")[0])
 
     df_2017_raw = df_2017_raw.withColumn(
         "ExpectedSalary",
@@ -73,12 +28,6 @@ def transform_2017(df):
              col("ExpectedSalary").cast("double"))
         .otherwise(lit(None).cast("double"))
     )
-
-    df_2017_raw.select("Overpaid", "ExpectedSalary").show()
-
-    df_2017_raw.printSchema()
-
-    df_2017_raw.groupBy("ExpectedSalary").count().show(truncate=False)
 
     df_2017_raw = df_2017_raw.withColumn(
         "annual_compensation_usd",
@@ -109,35 +58,25 @@ def transform_2017(df):
     df_2017_raw = df_2017_raw .drop("ExpectedSalary")
     df_2017_raw = df_2017_raw .drop("Overpaid")
 
-    df_2017_raw.groupBy("annual_compensation_usd").count().show(truncate=False)
-
-    df_2017_raw.show()
-
     df_2017_raw = df_2017_raw.select(
         col("Country").alias("country"),
         col("HighestEducationParents").alias("sex"),
-        col("occupation").alias("occupation"),
+        col("DeveloperType").alias("occupation"),
         col("YearsProgram").alias("experience_years"),
         col("annual_compensation_usd").alias("annual_compensation_usd"),
         col("WantWorkLanguage").alias("prog_language_proficient_in"),
         col("HaveWorkedFramework").alias("prog_language_desired"),
         col("JobSatisfaction").alias("job_satisfaction"),
         col("StackOverflowFoundAnswer").alias("tech_own"),
-        col("education").alias("education"),
+        col("FormalEducation").alias("education"),
     )
-
-    df_2017_raw.show()
 
     # adding year column
     df_2017_raw = df_2017_raw.withColumn("year", lit("2017"))
-
     # adding new columns
     new_columns = ["os_used", "age"]
-
     for col_name in new_columns:
         df_2017_raw = df_2017_raw.withColumn(col_name, lit(None))
-
-    df_2017_raw.show()
 
     # Reorder columns
     reordered_columns = [
@@ -155,19 +94,12 @@ def transform_2017(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2017 = df_2017_raw.select(*reordered_columns)
-
-    df_2017.show()
-
-    df_2017.printSchema()
 
     # schema validation and editing
     df_2017 = df_2017.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("age", col("age").cast("string")) \
         .withColumn("os_used", col("os_used").cast("string"))
-
-    df_2017.groupBy("experience_years").count().show(truncate=False)
 
     # cleaning experience_years column
     df_2017 = df_2017.withColumn(
@@ -182,8 +114,21 @@ def transform_2017(df):
         .otherwise("NA")
     )
 
-    df_2017.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+    df_2017 = df_2017.withColumn(
+        "sex",
+        when(col("sex").isNull(), "Unknown")
+        .when(lower(col("sex")).isin("prefer not to disclose", "i prefer not to answer", "i don't know/not sure"), "Unknown")
+        .when(lower(col("sex")).rlike("degree|high schoocollege|primary|no education"), "Unknown")
+        .when(lower(col("sex")) == "male", "Male")
+        .when(lower(col("sex")) == "female", "Female")
+        .when(lower(col("sex")).contains("non-binary"), "Non-binary")
+        .when(lower(col("sex")).contains("genderqueer"), "Non-binary")
+        .when(lower(col("sex")).contains("gender non-conforming"), "Non-binary")
+        .when(lower(col("sex")).contains("transgender"), "Transgender")
+        .when(lower(col("sex")).contains("other"), "Other")
+        .when(col("sex").contains(";"), "Multiple")
+        .otherwise("Other")
+    )
 
-    df_2017.show(5, truncate=False)
+    df_2017.show()
     return df_2017

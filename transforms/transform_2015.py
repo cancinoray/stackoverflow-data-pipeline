@@ -29,16 +29,12 @@ def transform_2015(df):
     cleaned_language_cols = [
         when((col(c).isNotNull()) & (col(c) != ""), col(c)) for c in columns
     ]
-
     # Concatenate non-null values into a single column
     df_2015_raw = df_2015_raw.withColumn(
         "tech_own", concat_ws(", ", *cleaned_language_cols)
     )
-
     # Drop the original programming language columns
     df_2015_raw = df_2015_raw.drop(*columns)
-
-    # Preview result
 
     # List of columns representing programming language selections
     columns = [
@@ -47,21 +43,16 @@ def transform_2015(df):
         "_c30", "_c31", "_c32", "_c33", "_c34", "_c35", "_c36", "_c37", "_c38", "_c39",
         "_c40", "_c41", "_c42", "_c43", "_c44", "_c45", "_c46", "_c47", "_c49", "_c50"
     ]
-
     # Replace nulls or empty strings with None, keeping valid values
     cleaned_language_cols = [
         when((col(c).isNotNull()) & (col(c) != ""), col(c)) for c in columns
     ]
-
     # Concatenate non-null values into a single column
     df_2015_raw = df_2015_raw.withColumn(
         "prog_language_proficient_in", concat_ws(", ", *cleaned_language_cols)
     )
-
     # Drop the original programming language columns
     df_2015_raw = df_2015_raw.drop(*columns)
-
-    # Preview result
 
     # Concatenating the columns for programming languages preferred
     # List all the relevant columns
@@ -107,15 +98,12 @@ def transform_2015(df):
         "_c92",
         "_c93",
     ]
-
     # Create a cleaned version of each column (null or empty string gets filtered)
     cleaned_cols = [when((col(c).isNotNull()) & (
         col(c) != ""), col(c)) for c in columns]
-
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2015_raw = df_2015_raw.withColumn(
         "prog_language_desired", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2015_raw = df_2015_raw.drop(*columns)
 
@@ -134,18 +122,16 @@ def transform_2015(df):
         "_c103",
         "_c104",
     ]
-
     # Create a cleaned version of each column (null or empty string gets filtered)
     cleaned_cols = [when((col(c).isNotNull()) & (
         col(c) != ""), col(c)) for c in columns]
-
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2015_raw = df_2015_raw.withColumn(
         "education", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2015_raw = df_2015_raw.drop(*columns)
 
+    # Selecting the relevant columns
     df_2015_raw = df_2015_raw.select(
         col("_c0").alias("country"),
         col("_c1").alias("age"),
@@ -166,21 +152,13 @@ def transform_2015(df):
     # Add index
     df_2015_raw = df_2015_raw.withColumn(
         'index', monotonically_increasing_id())
-
     # remove rows by filtering
     df_2015_raw = df_2015_raw.filter(~df_2015_raw.index.isin(0))
-
     # drop the index column
     df_2015_raw = df_2015_raw.drop("index")
 
     # adding year column
     df_2015_raw = df_2015_raw.withColumn("year", lit("2015"))
-
-    # adding new columns
-    # new_columns = ["job_satisfaction"]
-
-    # for col_name in new_columns:
-    #     df_2015_raw = df_2015_raw.withColumn(col_name, lit(None))
 
     # Reorder columns
     reordered_columns = [
@@ -198,11 +176,7 @@ def transform_2015(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2015 = df_2015_raw.select(*reordered_columns)
-
-    df_2015.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     # cleaning experience_years column
     df_2015 = df_2015.withColumn(
@@ -215,13 +189,6 @@ def transform_2015(df):
         .otherwise(None)
     )
 
-    df_2015.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2015.groupBy("annual_compensation").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    # cleaning the annual_compensation column
     # Clean and create the new column
     df_2015 = df_2015.withColumn(
         "annual_compensation_usd",
@@ -235,10 +202,5 @@ def transform_2015(df):
     # Drop the original column
     df_2015 = df_2015.drop("annual_compensation")
 
-    # Check result
-    df_2015.groupBy("annual_compensation_usd").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2015.show(5, truncate=False)
-
+    df_2015.show()
     return df_2015

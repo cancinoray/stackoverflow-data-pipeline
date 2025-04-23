@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id
+from pyspark.sql.functions import col, when, lit, regexp_replace, concat_ws, monotonically_increasing_id, split, lower
 from pyspark.sql import types
 
 
@@ -7,7 +7,6 @@ def transform_2020(df):
     df_2020_raw = df.select(
         "Country",
         "EdLevel",
-        "UndergradMajor",
         "DevType",
         "YearsCode",
         "JobSat",
@@ -19,26 +18,8 @@ def transform_2020(df):
         "Gender",
     )
 
-    df_2020_raw.show()
-
-    # List all the relevant columns
-    columns = [
-        "EdLevel",
-        "UndergradMajor",
-    ]
-
-    # Create a cleaned version of each column (null or empty string gets filtered)
-    cleaned_cols = [when((col(c).isNotNull()) & (col(c) != ""), col(c))
-                    for c in columns]
-
-    # Use concat_ws to join with commas, skipping nulls/empty values
     df_2020_raw = df_2020_raw.withColumn(
-        "education", concat_ws(", ", *cleaned_cols))
-
-    # Drop the original columns
-    df_2020_raw = df_2020_raw.drop(*columns)
-
-    df_2020_raw.show()
+        "DevType", split(col("DevType"), ";")[0])
 
     df_2020_raw = df_2020_raw.select(
         col("Country").alias("country"),
@@ -51,17 +32,13 @@ def transform_2020(df):
         col("LanguageWorkedWith").alias("prog_language_desired"),
         col("JobSat").alias("job_satisfaction"),
         col("OpSys").alias("os_used"),
-        col("education").alias("education"),
+        col("EdLevel").alias("education"),
     )
-
-    df_2020_raw.show()
 
     # adding year column
     df_2020_raw = df_2020_raw.withColumn("year", lit("2020"))
-
     # adding new columns
     new_columns = ["tech_own"]
-
     for col_name in new_columns:
         df_2020_raw = df_2020_raw.withColumn(col_name, lit(None))
 
@@ -84,18 +61,10 @@ def transform_2020(df):
 
     df_2020 = df_2020_raw.select(*reordered_columns)
 
-    df_2020.show()
-
-    df_2020.printSchema()
-
     # schema validation and editing
     df_2020 = df_2020.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("tech_own", col("tech_own").cast("string")) \
 
-    df_2020.printSchema()
-
-    df_2020.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2020 = df_2020.withColumn(
         "experience_years",
@@ -105,12 +74,6 @@ def transform_2020(df):
         .when(col("experience_years").cast("int") > 10, "11+")
         .otherwise(None)
     )
-
-    df_2020.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2020.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2020 = df_2020.withColumn(
         "age",
@@ -125,20 +88,12 @@ def transform_2020(df):
         .otherwise(">60")
     )
 
-    df_2020.groupBy("age").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2020.show()
-
     df_2020 = df_2020.withColumn(
         "sex",
         when(col("sex") == "Man", "Male")
         .when(col("sex") == "Woman", "Female")
         .otherwise(None)
     )
-
-    df_2020.groupBy("sex").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     df_2020 = df_2020.withColumn(
         "annual_compensation_usd",
@@ -164,11 +119,17 @@ def transform_2020(df):
         .when(col("annual_compensation") > 200000, ">200,000")
         .otherwise(None)
     )
-
     # Drop the original column
-    df_2020 = df_2020.drop("annual_compensation")
+    df_2020 = df_2020 .drop("annual_compensation")
 
-    df_2020.groupBy("annual_compensation_usd").count().show(truncate=False)
+    df_2020 = df_2020.withColumn(
+        "os_used",
+        when(col("os_used") == "Windows", "Windows")
+        .when(col("os_used") == "Linux-based", "Linux")
+        .when(col("os_used") == "MacOS", "Mac OS")
+        .when(col("os_used") == "NA", None)
+        .otherwise("Others")
+    )
 
-    df_2020.show(5, truncate=False)
+    df_2020.show()
     return df_2020

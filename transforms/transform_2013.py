@@ -4,7 +4,6 @@ from pyspark.sql import types
 
 
 def transform_2013(df):
-    # selecting columns to be used
     df_2013_raw = df.select(
         "What Country or Region do you live in?",
         "How old are you?",
@@ -76,11 +75,9 @@ def transform_2013(df):
     # Create a cleaned version of each column (null or empty string gets filtered)
     cleaned_cols = [when((col(c).isNotNull()) & (
         col(c) != ""), col(c)) for c in columns]
-
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2013_raw = df_2013_raw.withColumn(
         "prog_language_proficient_in", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2013_raw = df_2013_raw.drop(*columns)
 
@@ -133,14 +130,13 @@ def transform_2013(df):
     # Create a cleaned version of each column (null or empty string gets filtered)
     cleaned_cols = [when((col(c).isNotNull()) & (
         col(c) != ""), col(c)) for c in columns]
-
     # Use concat_ws to join with commas, skipping nulls/empty values
     df_2013_raw = df_2013_raw.withColumn(
         "prog_language_desired", concat_ws(", ", *cleaned_cols))
-
     # Drop the original columns
     df_2013_raw = df_2013_raw.drop(*columns)
 
+    # Selecting the relevant columns
     df_2013_raw = df_2013_raw.select(
         col("What Country or Region do you live in?").alias("country"),
         col("How old are you?").alias("age"),
@@ -161,7 +157,6 @@ def transform_2013(df):
     # Add index
     df_2013_raw = df_2013_raw.withColumn(
         'index', monotonically_increasing_id())
-
     # remove rows by filtering
     df_2013_raw = df_2013_raw.filter(~df_2013_raw.index.isin(0))
 
@@ -170,10 +165,8 @@ def transform_2013(df):
 
     # adding year column
     df_2013_raw = df_2013_raw.withColumn("year", lit("2013"))
-
     # adding new columns
     new_columns = ["sex", "education"]
-
     for col_name in new_columns:
         df_2013_raw = df_2013_raw.withColumn(col_name, lit(None))
 
@@ -193,17 +186,13 @@ def transform_2013(df):
         "prog_language_proficient_in",
         "prog_language_desired"
     ]
-
     df_2013 = df_2013_raw.select(*reordered_columns)
 
     # schema validation and editing
     df_2013 = df_2013.withColumn("year", col("year").cast(types.IntegerType())) \
         .withColumn("sex", col("sex").cast("string")) \
         .withColumn("education", col("education").cast("string")) \
-        .withColumn("prog_language_desired", col("prog_language_desired").cast("string"))
 
-    df_2013.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
 
     # cleaning experience_years column
     df_2013 = df_2013.withColumn(
@@ -215,12 +204,6 @@ def transform_2013(df):
         .otherwise(None)
     )
 
-    df_2013.groupBy("experience_years").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2013.groupBy("annual_compensation").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
     # cleaning the annual_compensation column
     # Clean and create the new column
     df_2013 = df_2013.withColumn(
@@ -229,16 +212,17 @@ def transform_2013(df):
         .when(col("annual_compensation") == "Rather not say", None)
         .otherwise(regexp_replace(col("annual_compensation"), r"\$", ""))
     )
-
     # Drop the original column
     df_2013 = df_2013.drop("annual_compensation")
 
-    # Check result
-    df_2013.groupBy("annual_compensation_usd").count().orderBy(
-        "count", ascending=False).show(truncate=False)
-
-    df_2013.groupBy("job_satisfaction").count().orderBy(
-        "count", ascending=False).show(truncate=False)
+    df_2013 = df_2013.withColumn(
+        "os_used",
+        when(col("os_used").isNull(), None)
+        .when(col("os_used").like("Windows%"), "Windows")
+        .when(col("os_used").like("Linux"), "Linux")
+        .when(col("os_used").like("Mac OS%"), "Mac OS")
+        .otherwise(None)
+    )
 
     df_2013.show()
     return df_2013
