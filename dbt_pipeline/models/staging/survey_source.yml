@@ -1,0 +1,35 @@
+version: 2
+
+sources:
+  - name: stackoverflow
+    database: stackoverflow-survey-456106 # Replace with your actual GCP project ID
+    schema: stackoverflow_survey_dataset # Replace with your BigQuery dataset name
+    tables:
+      - name: 2024_survey
+        description: Stack Overflow Developer Survey 2024
+      - name: 2023_survey
+        description: Stack Overflow Developer Survey 2023
+      - name: 2022_survey
+        description: Stack Overflow Developer Survey 2022
+      - name: 2021_survey
+        description: Stack Overflow Developer Survey 2021
+      - name: 2020_survey
+        description: Stack Overflow Developer Survey 2020
+      - name: 2019_survey
+        description: Stack Overflow Developer Survey 2019
+      - name: 2018_survey
+        description: Stack Overflow Developer Survey 2018
+      - name: 2017_survey
+        description: Stack Overflow Developer Survey 2017
+      - name: 2016_survey
+        description: Stack Overflow Developer Survey 2016
+      - name: 2015_survey
+        description: Stack Overflow Developer Survey 2015
+      - name: 2014_survey
+        description: Stack Overflow Developer Survey 2014
+      - name: 2013_survey
+        description: Stack Overflow Developer Survey 2013
+      - name: 2012_survey
+        description: Stack Overflow Developer Survey 2012
+      - name: 2011_survey
+        description: Stack Overflow Developer Survey 2011
