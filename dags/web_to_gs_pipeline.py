@@ -17,33 +17,32 @@ with DAG(
     tags=["scraper", "stackoverflow"],
 ) as dag:
 
-    # # Task 1: Scrape and upload to GCS
-    # t1 = PythonOperator(
-    #     task_id="scrape_and_upload_to_gcs",
-    #     python_callable=scrape_and_upload,
-    # )
+    # Task 1: Scrape and upload to GCS
+    t1 = PythonOperator(
+        task_id="scrape_and_upload_to_gcs",
+        python_callable=scrape_and_upload,
+    )
 
-    # # # Task 2: Extract CSVs from zip files and upload the CSV to GCS
-    # t2 = PythonOperator(
-    #     task_id="gcs_extract_load",
-    #     python_callable=extract_upload_csvs_to_gcs_and_bigquery,
-    # )
+    # # Task 2: Extract CSVs from zip files and upload the CSV to GCS
+    t2 = PythonOperator(
+        task_id="gcs_extract_load",
+        python_callable=extract_upload_csvs_to_gcs_and_bigquery,
+    )
 
-    # t3 = PythonOperator(
-    #     task_id="transform_and_upload_to_bigquery",
-    #     python_callable=transform_and_upload_to_bigquery,
-    # )
+    t3 = PythonOperator(
+        task_id="transform_and_upload_to_bigquery",
+        python_callable=transform_and_upload_to_bigquery,
+    )
 
     # t4 = PythonOperator(
     #     task_id="combine_surveys",
     #     python_callable=combine_surveys,
     # )
 
-    t5 = PythonOperator(
-        task_id="clean_and_transform_survey_data",
-        python_callable=clean_and_transform_survey_data,
-    )
+    # t5 = PythonOperator(
+    #     task_id="clean_and_transform_survey_data",
+    #     python_callable=clean_and_transform_survey_data,
+    # )
 
     # Define dependencies
-    # t1 >> t2 >> t3 >> t4
-    t5
+    t1 >> t2 >> t3
