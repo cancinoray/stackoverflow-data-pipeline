@@ -4,6 +4,7 @@ with source as (
 
 normalized_age as (
     select
+        respondent_id,  -- Include the respondent_id in the CTE
         case
             when age is null then null
             when age = 'Prefer not to disclose' then 'Prefer not to disclose'

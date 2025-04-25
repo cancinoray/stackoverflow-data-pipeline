@@ -4,6 +4,7 @@ WITH source AS (
 ),
 normalized_job_satisfaction AS (
     SELECT 
+        respondent_id,  -- Include the respondent_id in the CTE
         CASE 
             -- Null values
             WHEN job_satisfaction IS NULL THEN 'Not specified'

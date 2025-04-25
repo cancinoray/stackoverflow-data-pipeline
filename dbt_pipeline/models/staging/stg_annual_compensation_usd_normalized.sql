@@ -3,7 +3,8 @@ WITH source AS (
     FROM {{ ref('stg_stackoverflow_all_years') }}
 ),
 normalized_annual_compensation_usd AS (
-    SELECT 
+    SELECT
+        respondent_id,  -- Include the respondent_id in the CTE
         CASE 
             WHEN annual_compensation_usd IS NULL THEN 'Unknown'
             WHEN annual_compensation_usd = 'null' THEN 'Unknown'

@@ -7,6 +7,7 @@ with source as (
 -- into standardized categories for consistent analysis across years
 normalized_education as (
     select
+        respondent_id,  -- Include the respondent_id in the CTE
         case
             when coalesce(education, '') = '' or lower(education) in ('na', 'null') then 'No Answer'
             when REGEXP_CONTAINS(lower(education), r'\bassociate\b|\bassociates\b') then 'Associate Degree'

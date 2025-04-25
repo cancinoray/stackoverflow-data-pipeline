@@ -3,6 +3,12 @@
 
     {% for year in years %}
         SELECT
+        -- Create a unique ID for each respondent
+            MD5(CONCAT(
+                CAST(year AS STRING),
+                CAST(ROW_NUMBER() OVER() AS STRING),
+                '{{ year }}'  -- Survey year as salt
+            )) AS respondent_id,
             CAST(year AS STRING) AS year,
             country,
             sex,

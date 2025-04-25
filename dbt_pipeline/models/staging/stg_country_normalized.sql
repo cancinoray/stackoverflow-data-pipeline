@@ -5,6 +5,7 @@ with source as (
 
 renamed as (
     select
+        respondent_id,  -- Include the respondent_id in the CTE
         case
             when country in ('United States of America', 'USA') then 'United States'
             when country in ('United Kingdom of Great Britain and Northern Ireland') then 'United Kingdom'
