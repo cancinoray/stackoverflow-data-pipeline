@@ -10,3 +10,5 @@ pyspark==3.3.2
 # apache-airflow
 apache-airflow-providers-common-compat==1.2.2
 apache-airflow-providers-apache-spark==4.11.3
+astronomer-cosmos
+apache-airflow-providers-google

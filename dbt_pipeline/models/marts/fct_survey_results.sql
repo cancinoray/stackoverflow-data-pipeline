@@ -1,11 +1,25 @@
+{{ config(
+    partition_by={
+        "field": "year",
+        "data_type": "int64",
+        "range": {
+            "start": 2011,
+            "end": 2025,
+            "interval": 1
+        }
+    },
+    cluster_by=["year", "country"]
+) }}
+
+
 WITH base_data AS (
     SELECT
         respondent_id,
-        year,
+        CAST(year AS INT64) AS year,
         experience_years,
         tech_own,
         prog_language_desired,
-        prog_language_proficient_in,
+        prog_language_proficient_in
     FROM {{ ref('stg_stackoverflow_all_years') }}
 )
 
