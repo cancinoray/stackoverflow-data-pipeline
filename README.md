@@ -14,15 +14,13 @@ You can check the source of data here: [https://survey.stackoverflow.co/](https:
 
 To analyze 14 years of Stack Overflow developer survey data to uncover meaningful insights about technology trends and developer experiences.
 
-1. **Tech Trends**: Track programming language popularity, regional differences, and enterprise vs. startup preferences over 13 years.
+1. **Tech Trends**: Track programming language popularity, regional differences over 14 years.
 
 2. **Salary Insights**: Analyze pay by skills, experience, and location, including top-paying tech and gender gaps.
 
-3. **Job Happiness**: Identify key satisfaction factors, compare languages, and remote vs. office work.
+3. **Job Happiness**: Identify key satisfaction factors and compare languages
 
 4. **Future Tech**: Predict emerging trends by analyzing past adoption patterns and failures.
-
-5. **Career Growth**: Study developer career paths, fast-advancing tech stacks, and role transitions.
 ---
 
 
@@ -57,6 +55,8 @@ To analyze 14 years of Stack Overflow developer survey data to uncover meaningfu
 ---
 
 ## Dashboard
+
+---
 
 ## 🗂 Project Structure
 
