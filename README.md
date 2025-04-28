@@ -12,15 +12,28 @@ You can check the source of data here: [https://survey.stackoverflow.co/](https:
 ---
 ## 💭 Problem Statement
 
-To analyze 14 years of Stack Overflow developer survey data to uncover meaningful insights about technology trends and developer experiences.
+This project analyzes 14 years of Stack Overflow Developer Survey data to uncover valuable insights into technology trends, developer experiences, and industry shifts. The analysis covers a wide range of topics, including programming languages, salary distribution, education demographics, job roles, and predictions for future tech trends.
 
-1. **Tech Trends**: Track programming language popularity, regional differences over 14 years.
+### Key Insights:
 
-2. **Salary Insights**: Analyze pay by skills, experience, and location, including top-paying tech and gender gaps.
+1. **Technology Trends**:
+   - Track the evolution of programming language popularity over time.
+   - Identify regional differences in tech adoption and usage trends across different countries and regions over the past 14 years.
 
-3. **Job Happiness**: Identify key satisfaction factors and compare languages
+2. **Salary Insights**:
+   - Examine salary distribution based on factors such as skills, years of experience, and geographical location.
+   - Explore top-paying technologies and analyze gender pay gaps within the developer community.
 
-4. **Future Tech**: Predict emerging trends by analyzing past adoption patterns and failures.
+3. **Educational Demographics**:
+   - Analyze the education levels of developers to understand the relationship between educational background and career progression in tech.
+
+4. **Occupation Breakdown**:
+   - Gain insights into the diverse job roles within the tech industry, including developers, data scientists, product managers, and other tech professionals.
+   - Explore how occupation types have evolved over time and their geographical distribution.
+
+5. **Future Tech Predictions**:
+   - Use historical data to identify emerging technology trends, examining patterns in adoption and analyzing failures.
+   - Predict the next wave of popular technologies and methodologies based on past survey data and usage trends.
 ---
 
 
@@ -55,6 +68,10 @@ To analyze 14 years of Stack Overflow developer survey data to uncover meaningfu
 ---
 
 ## Dashboard
+
+![Dashboard Analysis](images/Dashboard%20Analytics.jpg)
+
+You can check the dashboard here: [Stack Overflow Annual Developer's Survey Analysis](https://lookerstudio.google.com/reporting/8506c4f0-3b8e-4fe3-bdd8-364414e2f600)
 
 ---
 
@@ -195,7 +212,7 @@ Visit `http://localhost:8080` and use:
 - **Username**: `admin`
 - **Password**: `admin` (default)
 
-Trigger the `main_dags` DAG to run the pipeline.
+Trigger the `stackoverflow_end_to_end_dag` DAG to run the pipeline.
 
 ### 9. Create connections in Airflow UI
    - Click `Admin` and then select `Connections`
